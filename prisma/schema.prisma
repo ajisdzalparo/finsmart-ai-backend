@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String                @id @default(cuid())
+  email        String                @unique
+  passwordHash String
+  name         String?
+  isActive     Boolean               @default(true)
+  profiles     Profile[]
+  categories   Category[]
+  transactions Transaction[]
+  templates    TransactionTemplate[]
+  batches      TransactionBatch[]
+  goals        Goal[]
+  reminders    Reminder[]
+  insights     Insight[]
+  reports      Report[]
+  activityLogs ActivityLog[]
+  createdAt    DateTime              @default(now())
+  lastLogin    DateTime?
+  isNew        Boolean               @default(true)
+  interests    String[]              @default([])
+  incomeRange  String?
+  expenseCategories String[]         @default([])
+  profileCompleted Boolean           @default(false)
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  name      String
+  age       Int?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id           String                @id @default(cuid())
+  name         String
+  type         String // income | expense | transfer
+  color        String?
+  icon         String?
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id])
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  deletedAt    DateTime?
+  isDeleted    Boolean               @default(false)
+  transactions Transaction[]
+  templates    TransactionTemplate[]
+}
+
+model Transaction {
+  id              String               @id @default(cuid())
+  templateId      String?
+  template        TransactionTemplate? @relation(fields: [templateId], references: [id])
+  amount          Decimal
+  currency        String
+  description     String?
+  transactionDate DateTime
+  isRecurring     Boolean              @default(false)
+  autoCategorized Boolean              @default(false)
+  categoryId      String?
+  category        Category?            @relation(fields: [categoryId], references: [id])
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id])
+  batchId         String?
+  batch           TransactionBatch?    @relation(fields: [batchId], references: [id])
+  createdAt       DateTime             @default(now())
+}
+
+model TransactionTemplate {
+  id           String        @id @default(cuid())
+  name         String
+  amount       Decimal
+  currency     String
+  description  String?
+  frequency    String? // daily, weekly, monthly, custom
+  nextRunDate  DateTime?
+  isActive     Boolean       @default(true)
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+model TransactionBatch {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  description  String?
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  name          String
+  targetAmount  Decimal
+  currentAmount Decimal   @default(0)
+  targetDate    DateTime?
+  goalType      String
+  isActive      Boolean   @default(true)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+}
+
+model Reminder {
+  id           String   @id @default(cuid())
+  message      String
+  reminderDate DateTime
+  frequency    String?
+  isActive     Boolean  @default(true)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model Insight {
+  id          String   @id @default(cuid())
+  insightType String
+  data        Json
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  generatedAt DateTime @default(now())
+}
+
+model Report {
+  id           String    @id @default(cuid())
+  reportType   String
+  periodStart  DateTime?
+  periodEnd    DateTime?
+  summary      String?
+  exportFormat String?
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  generatedAt  DateTime  @default(now())
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String
+  entityId    String?
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}

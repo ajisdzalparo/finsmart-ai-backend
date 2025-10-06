@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const categories_controller_1 = require("../controllers/categories.controller");
+const router = (0, express_1.Router)();
+router.get("/", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.getCategories)(req, res));
+router.get("/deleted", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.getDeletedCategories)(req, res));
+router.get("/:id", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.getCategory)(req, res));
+router.post("/", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.postCategory)(req, res));
+router.put("/:id", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.putCategory)(req, res));
+router.put("/:id/restore", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.restoreCategoryController)(req, res));
+router.delete("/:id", auth_1.requireAuth, async (req, res) => (0, categories_controller_1.deleteCategoryController)(req, res));
+exports.default = router;

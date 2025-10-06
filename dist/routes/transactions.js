@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const transactions_controller_1 = require("../controllers/transactions.controller");
+const router = (0, express_1.Router)();
+router.get("/", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransactions)(req, res));
+router.get("/validate", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.validateTransactionName)(req, res));
+router.get("/:id", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransaction)(req, res));
+router.get("/category/:categoryId", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransactionsByCategoryController)(req, res));
+router.post("/quick", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.postQuickTransaction)(req, res));
+router.post("/batch", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.postBatchTransactions)(req, res));
+router.put("/:id", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.putTransaction)(req, res));
+router.delete("/:id", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.deleteTransactionController)(req, res));
+exports.default = router;
