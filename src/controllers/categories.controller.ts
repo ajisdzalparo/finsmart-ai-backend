@@ -62,7 +62,7 @@ export async function postCategory(req: AuthRequest, res: Response) {
   // Check for duplicate category name
   const existingCategory = await getCategoryByNameAndType(req.userId, parsed.data.name, parsed.data.type);
   if (existingCategory) {
-    errorResponse(res, "Kategori dengan nama dan tipe yang sama sudah ada", 409);
+    return errorResponse(res, "Kategori dengan nama dan tipe yang sama sudah ada", 409);
   }
 
   const item = await createCategory(req.userId, parsed.data as CategoryInput);
