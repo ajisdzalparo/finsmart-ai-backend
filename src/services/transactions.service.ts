@@ -7,6 +7,11 @@ export type TransactionInput = {
   transactionDate: string;
   categoryId?: string;
   templateId?: string;
+  // Optional: alokasikan sebagian/seluruh transaksi ke satu/lebih goals
+  goalAllocations?: Array<{
+    goalId: string;
+    amount: number;
+  }>;
 };
 
 export function listTransactions(userId: string | undefined) {
@@ -27,19 +32,56 @@ export function createBatch(userId: string | undefined, description: string | un
   return prisma.transactionBatch.create({ data: { description, userId: userId! } });
 }
 
-export function createBatchItems(userId: string | undefined, batchId: string, items: TransactionInput[]) {
-  return prisma.$transaction(
+export async function createBatchItems(userId: string | undefined, batchId: string, items: TransactionInput[]) {
+  // Buat semua transaksi terlebih dahulu
+  const created = await prisma.$transaction(
     items.map((t) =>
       prisma.transaction.create({
         data: {
-          ...t,
+          amount: t.amount,
+          currency: t.currency,
+          description: t.description,
           transactionDate: new Date(t.transactionDate),
+          categoryId: t.categoryId ?? null,
+          templateId: t.templateId ?? null,
           userId: userId!,
           batchId,
         },
       })
     )
   );
+
+  // Setelah transaksi dibuat, proses alokasi ke goals (jika ada)
+  const allocationOps: Parameters<typeof prisma.$transaction>[0] = [] as any;
+
+  items.forEach((t, idx) => {
+    const allocs = t.goalAllocations || [];
+    if (!allocs.length) return;
+
+    // Validasi sederhana: amount alokasi tidak melampaui amount transaksi
+    const totalAlloc = allocs.reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    if (totalAlloc > Number(t.amount)) {
+      // Jika melebihi, batalkan seluruh batch dengan melempar error
+      throw new Error("Total alokasi goal melebihi jumlah transaksi");
+    }
+
+    // Siapkan increment currentAmount per goal
+    for (const a of allocs) {
+      if (!a.goalId || !(Number(a.amount) > 0)) continue;
+      allocationOps.push(
+        prisma.goal.update({
+          where: { id: a.goalId, userId: userId! },
+          data: { currentAmount: { increment: Number(a.amount) } },
+        })
+      );
+    }
+  });
+
+  if (allocationOps.length > 0) {
+    await prisma.$transaction(allocationOps as any);
+  }
+
+  return created;
 }
 
 export function getTransactionById(userId: string | undefined, transactionId: string) {

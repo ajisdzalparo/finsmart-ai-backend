@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { createJwtToken, createUser, getUserByEmail, getUserById, verifyJwtToken, verifyPassword, updateUserProfile } from "../services/auth.service";
+import { createJwtToken, createUser, getUserByEmail, getUserById, verifyJwtToken, verifyPassword, updateUserProfile, updateUserName, changeUserPassword } from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth";
 import { successResponse, errorResponse } from "../utils/response";
 import { createDefaultCategories } from "../utils/defaultCategories";
@@ -31,7 +31,7 @@ export async function register(req: Request, res: Response) {
   if (existing) return errorResponse(res, "User already exists", 400);
 
   const user = await createUser(email, password, name);
-  
+
   // Create default categories for new user
   try {
     await createDefaultCategories(user.id);
@@ -39,7 +39,7 @@ export async function register(req: Request, res: Response) {
     console.error("Error creating default categories:", error);
     // Don't fail registration if categories creation fails
   }
-  
+
   return successResponse(res, { name: user.name, email: user.email }, "Registration successful", 201);
 }
 
@@ -115,5 +115,31 @@ export async function completeProfile(req: AuthRequest, res: Response) {
   } catch (error) {
     console.error("Error completing profile:", error);
     return errorResponse(res, "Failed to complete profile", 500);
+  }
+}
+
+export async function updateName(req: AuthRequest, res: Response) {
+  const schema = z.object({ name: z.string().min(1) });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return errorResponse(res, "Invalid name", 400, parsed.error.format());
+  try {
+    const user = await updateUserName(req.userId!, parsed.data.name);
+    return successResponse(res, { name: user.name, email: user.email }, "Name updated", 200);
+  } catch (error) {
+    return errorResponse(res, "Failed to update name", 500, error);
+  }
+}
+
+export async function changePassword(req: AuthRequest, res: Response) {
+  const schema = z.object({ currentPassword: z.string().min(6), newPassword: z.string().min(6) });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return errorResponse(res, "Invalid password payload", 400, parsed.error.format());
+  try {
+    await changeUserPassword(req.userId!, parsed.data.currentPassword, parsed.data.newPassword);
+    return successResponse(res, { ok: true }, "Password updated", 200);
+  } catch (error: any) {
+    const message = String(error?.message || "Failed to update password");
+    const code = message.includes("Invalid current password") ? 400 : 500;
+    return errorResponse(res, message, code);
   }
 }

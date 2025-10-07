@@ -49,3 +49,17 @@ export async function updateUserProfile(
     data: profileData,
   });
 }
+
+export async function updateUserName(userId: string, name: string) {
+  return prisma.user.update({ where: { id: userId }, data: { name } });
+}
+
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+  const ok = await verifyPassword(currentPassword, (user as any).passwordHash);
+  if (!ok) throw new Error("Invalid current password");
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  return true;
+}

@@ -15,13 +15,12 @@ import remindersRouter from "./routes/reminders";
 import dashboardRouter from "./routes/dashboard";
 import reportsRouter from "./routes/reports";
 import activityRouter from "./routes/activity";
+import aiRouter from "./routes/ai";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
-
-
 
 app.use(express.json());
 
@@ -39,6 +38,7 @@ app.use("/reminders", remindersRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/reports", reportsRouter);
 app.use("/activity", activityRouter);
+app.use("/ai", aiRouter);
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
   console.log(`API listening on port ${port}`);

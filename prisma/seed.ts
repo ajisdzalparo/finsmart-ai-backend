@@ -19,8 +19,11 @@ async function main() {
 
   await prisma.insight.create({
     data: {
-      insightType: "trend",
-      data: { message: "Spending increased 10% last month" },
+      type: "spending_analysis",
+      title: "Sample Insight",
+      message: "Spending increased 10% last month",
+      data: { note: "seed" },
+      priority: "medium",
       userId: user.id,
     },
   });
@@ -31,9 +34,9 @@ async function main() {
 
   await prisma.transaction.createMany({
     data: [
-      { amount: 2000, currency: "USD", description: "Monthly salary", transactionDate: new Date(), userId: user.id, categoryId: salary.id, isRecurring: true, autoCategorized: true },
-      { amount: 120, currency: "USD", description: "Restaurant", transactionDate: new Date(), userId: user.id, categoryId: food.id, isRecurring: false, autoCategorized: false },
-      { amount: 80, currency: "USD", description: "Groceries", transactionDate: new Date(), userId: user.id, categoryId: food.id, isRecurring: false, autoCategorized: false },
+      { amount: 2000, currency: "IDR", description: "Monthly salary", transactionDate: new Date(), userId: user.id, categoryId: salary.id, isRecurring: true, autoCategorized: true },
+      { amount: 120, currency: "IDR", description: "Restaurant", transactionDate: new Date(), userId: user.id, categoryId: food.id, isRecurring: false, autoCategorized: false },
+      { amount: 80, currency: "IDR", description: "Groceries", transactionDate: new Date(), userId: user.id, categoryId: food.id, isRecurring: false, autoCategorized: false },
     ],
   });
 }

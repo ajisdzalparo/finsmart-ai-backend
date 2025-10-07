@@ -19,6 +19,7 @@ const reminders_1 = __importDefault(require("./routes/reminders"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const activity_1 = __importDefault(require("./routes/activity"));
+const ai_1 = __importDefault(require("./routes/ai"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
@@ -37,6 +38,7 @@ app.use("/reminders", reminders_1.default);
 app.use("/dashboard", dashboard_1.default);
 app.use("/reports", reports_1.default);
 app.use("/activity", activity_1.default);
+app.use("/ai", ai_1.default);
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
     console.log(`API listening on port ${port}`);

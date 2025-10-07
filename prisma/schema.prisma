@@ -21,6 +21,7 @@ model User {
   goals        Goal[]
   reminders    Reminder[]
   insights     Insight[]
+  recommendations Recommendation[]
   reports      Report[]
   activityLogs ActivityLog[]
   createdAt    DateTime              @default(now())
@@ -127,11 +128,27 @@ model Reminder {
 
 model Insight {
   id          String   @id @default(cuid())
-  insightType String
+  type        String   @default("spending_analysis") // spending_analysis | goal_recommendation | budget_advice | investment_advice
+  title       String   @default("AI Insight")
+  message     String   @default("AI analysis in progress")
   data        Json
+  priority    String   @default("medium") // low | medium | high
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   generatedAt DateTime @default(now())
+}
+
+model Recommendation {
+  id        String   @id @default(cuid())
+  type      String   @default("spending_optimization") // spending_optimization | savings_improvement | goal_acceleration | investment_advice
+  title     String   @default("AI Recommendation")
+  message   String   @default("AI recommendation in progress")
+  amount    Decimal?
+  priority  String   @default("medium") // low | medium | high
+  isRead    Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Report {
