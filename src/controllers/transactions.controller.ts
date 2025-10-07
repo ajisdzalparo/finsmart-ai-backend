@@ -7,6 +7,7 @@ import {
   createBatchItems,
   createQuickTransaction,
   listTransactions,
+  listTransactionsPaginated,
   getTransactionById,
   updateTransaction,
   deleteTransaction,
@@ -27,6 +28,20 @@ const baseSchema = z.object({
 export async function getTransactions(req: AuthRequest, res: Response) {
   const items = await listTransactions(req.userId);
   successResponse(res, items);
+}
+
+export async function getTransactionsPaginated(req: AuthRequest, res: Response) {
+  const page = Number((req.query.page as string) ?? 1);
+  const limit = Number((req.query.limit as string) ?? 10);
+  const type = req.query.type as string as any; // 'income' | 'expense' | 'transfer' | 'all'
+  const q = (req.query.q as string) ?? undefined;
+  const result = await listTransactionsPaginated(req.userId, page, limit, { type, q });
+  successResponse(res, result.items, "Success", 200, {
+    total: result.total,
+    page: result.page,
+    limit: result.limit,
+    totalPages: result.totalPages,
+  });
 }
 
 export async function postQuickTransaction(req: AuthRequest, res: Response) {

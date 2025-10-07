@@ -18,6 +18,50 @@ export function listTransactions(userId: string | undefined) {
   return prisma.transaction.findMany({ where: { userId }, orderBy: { transactionDate: "desc" } });
 }
 
+export async function listTransactionsPaginated(
+  userId: string | undefined,
+  page: number,
+  limit: number,
+  options?: {
+    type?: "income" | "expense" | "transfer" | "all";
+    q?: string;
+  }
+) {
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const safeLimit = Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 20;
+  const skip = (safePage - 1) * safeLimit;
+
+  const whereClause: any = { userId };
+
+  // Filter berdasarkan tipe kategori jika disediakan
+  const type = options?.type && options.type !== "all" ? options.type : undefined;
+  if (type) {
+    whereClause.category = { ...(whereClause.category || {}), type };
+  }
+
+  // Pencarian dengan q pada description atau nama kategori (case-insensitive)
+  const q = options?.q?.trim();
+  if (q) {
+    const orConditions: any[] = [{ description: { contains: q, mode: "insensitive" } }, { category: { name: { contains: q, mode: "insensitive" } } }];
+    whereClause.OR = orConditions;
+  }
+
+  const [total, items] = await Promise.all([
+    prisma.transaction.count({ where: whereClause }),
+    prisma.transaction.findMany({
+      where: whereClause,
+      orderBy: { transactionDate: "desc" },
+      skip,
+      take: safeLimit,
+      include: { category: true },
+    }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+
+  return { items, total, page: safePage, limit: safeLimit, totalPages };
+}
+
 export function createQuickTransaction(userId: string | undefined, input: TransactionInput) {
   return prisma.transaction.create({
     data: {

@@ -104,6 +104,25 @@ export async function listReports(userId: string | undefined) {
   });
 }
 
+export async function listReportsPaginated(userId: string | undefined, page: number, limit: number) {
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  const safeLimit = Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 20;
+  const skip = (safePage - 1) * safeLimit;
+
+  const [total, items] = await Promise.all([
+    prisma.report.count({ where: { userId } }),
+    prisma.report.findMany({
+      where: { userId },
+      orderBy: { generatedAt: "desc" },
+      skip,
+      take: safeLimit,
+    }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+  return { items, total, page: safePage, limit: safeLimit, totalPages };
+}
+
 export async function getReportById(userId: string | undefined, id: string) {
   return prisma.report.findFirst({ where: { id, userId } });
 }

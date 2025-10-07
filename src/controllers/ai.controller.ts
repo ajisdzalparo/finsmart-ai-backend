@@ -5,6 +5,27 @@ import { successResponse, errorResponse } from "../utils/response";
 import { AuthRequest } from "../middleware/auth";
 
 export class AIController {
+  static async previewInsights(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.userId;
+      if (!userId) return errorResponse(res, "User not authenticated", 401);
+      const data = await DeepseekAIService.previewFinancialInsights(userId);
+      return successResponse(res, data, "Preview insights");
+    } catch (e) {
+      return errorResponse(res, "Failed to preview insights", 500);
+    }
+  }
+
+  static async previewRecommendations(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.userId;
+      if (!userId) return errorResponse(res, "User not authenticated", 401);
+      const data = await DeepseekAIService.previewRecommendations(userId);
+      return successResponse(res, data, "Preview recommendations");
+    } catch (e) {
+      return errorResponse(res, "Failed to preview recommendations", 500);
+    }
+  }
   static async generateInsights(req: AuthRequest, res: Response) {
     try {
       const userId = req.userId;

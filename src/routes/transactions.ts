@@ -2,6 +2,7 @@ import { Router } from "express";
 import { AuthRequest, requireAuth } from "../middleware/auth";
 import {
   getTransactions,
+  getTransactionsPaginated,
   postBatchTransactions,
   postQuickTransaction,
   getTransaction,
@@ -14,6 +15,7 @@ import {
 const router = Router();
 
 router.get("/", requireAuth, async (req: AuthRequest, res) => getTransactions(req, res));
+router.get("/list", requireAuth, async (req: AuthRequest, res) => getTransactionsPaginated(req, res));
 router.get("/validate", requireAuth, async (req: AuthRequest, res) => validateTransactionName(req, res));
 router.get("/:id", requireAuth, async (req: AuthRequest, res) => getTransaction(req, res));
 router.get("/category/:categoryId", requireAuth, async (req: AuthRequest, res) => getTransactionsByCategoryController(req, res));

@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { z } from "zod";
 import { AuthRequest } from "../middleware/auth";
-import { ReportInput, createReport, listReports, getReportById, serializeReport } from "../services/reports.service";
+import { ReportInput, createReport, listReports, listReportsPaginated, getReportById, serializeReport } from "../services/reports.service";
 
 const schema = z.object({
   reportType: z.string(),
@@ -18,6 +18,23 @@ export async function postReport(req: AuthRequest, res: Response) {
 }
 
 export async function getReports(req: AuthRequest, res: Response) {
+  const { page, limit } = req.query as { page?: string; limit?: string };
+  if (page || limit) {
+    const p = Number(page ?? 1);
+    const l = Number(limit ?? 20);
+    const result = await listReportsPaginated(req.userId, p, l);
+    return res.status(200).json({
+      success: true,
+      message: "Success",
+      data: result.items.map(serializeReport),
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      },
+    });
+  }
   const reports = await listReports(req.userId);
   res.json(reports.map(serializeReport));
 }

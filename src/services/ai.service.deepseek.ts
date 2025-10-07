@@ -66,6 +66,72 @@ async function callDeepSeek(prompt: string): Promise<string> {
 }
 
 export class DeepseekAIService {
+  static async previewFinancialInsights(userId: string) {
+    // Build summary (same as generator) but DO NOT write to DB
+    const [transactions, goals] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { userId },
+        include: { category: true },
+        orderBy: { transactionDate: "desc" },
+        take: 60,
+      }),
+      prisma.goal.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+    ]);
+
+    const totalIncome = transactions.filter((t) => t.category?.type === "income").reduce((s, t) => s + Number(t.amount), 0);
+    const totalExpense = transactions.filter((t) => t.category?.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
+
+    const summary = {
+      totalIncome,
+      totalExpense,
+      goals: goals.map((g) => ({
+        id: g.id,
+        name: g.name,
+        targetAmount: Number(g.targetAmount),
+        currentAmount: Number(g.currentAmount),
+        targetDate: g.targetDate,
+      })),
+    };
+
+    const prompt = `Buat 3 insight finansial singkat berbasis data berikut dalam format JSON array berisi objek {type,title,message,priority}.
+Data: ${JSON.stringify(summary)}
+Rules:
+- type salah satu dari: spending_analysis, goal_recommendation, budget_advice, investment_advice
+- priority salah satu dari: low, medium, high
+- Balas HANYA JSON valid, tanpa teks lain.`;
+
+    const content = await callDeepSeek(prompt);
+    const insights = extractJsonArray(content).slice(0, 3);
+    return insights;
+  }
+
+  static async previewRecommendations(userId: string) {
+    const transactions = await prisma.transaction.findMany({
+      where: { userId },
+      include: { category: true },
+      orderBy: { transactionDate: "desc" },
+      take: 40,
+    });
+    const byCategory: Record<string, number> = {};
+    for (const t of transactions) {
+      if (t.category?.type === "expense") {
+        const name = t.category?.name || "Other";
+        byCategory[name] = (byCategory[name] || 0) + Number(t.amount);
+      }
+    }
+    const sorted = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+    const top = sorted[0]?.[0] || "Other";
+
+    const prompt = `Buat 3 rekomendasi finansial singkat sebagai JSON array {type,title,message,priority}.
+Fokus pada pengeluaran terbesar kategori: ${top}.
+Rules:
+- type salah satu dari: spending_optimization, savings_improvement, goal_acceleration, investment_advice
+- priority: low|medium|high
+- Balas HANYA JSON valid.`;
+    const content = await callDeepSeek(prompt);
+    const recs = extractJsonArray(content).slice(0, 3);
+    return recs;
+  }
   static async generateFinancialInsights(userId: string) {
     try {
       // Summarize recent user finance to condition the model
@@ -106,11 +172,12 @@ Rules:
       if (!insights || insights.length === 0) {
         // Fallback default insights jika model gagal/format tidak valid
         const balance = totalIncome - totalExpense;
+        const fmt = (n: number) => n.toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
         insights = [
           {
             type: "spending_analysis",
             title: "Ringkasan Arus Kas",
-            message: `Pendapatan ${Math.round(totalIncome)} vs Pengeluaran ${Math.round(totalExpense)}. Saldo bulan ini ${Math.round(balance)}.`,
+            message: `Pendapatan ${fmt(totalIncome)} vs Pengeluaran ${fmt(totalExpense)}. Saldo bulan ini ${fmt(balance)}.`,
             priority: balance < 0 ? "high" : balance < totalIncome * 0.1 ? "medium" : "low",
           },
           {
