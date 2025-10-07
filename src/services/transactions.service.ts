@@ -15,7 +15,7 @@ export type TransactionInput = {
 };
 
 export function listTransactions(userId: string | undefined) {
-  return prisma.transaction.findMany({ where: { userId }, orderBy: { transactionDate: "desc" } });
+  return prisma.transaction.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
 }
 
 export async function listTransactionsPaginated(
@@ -50,7 +50,7 @@ export async function listTransactionsPaginated(
     prisma.transaction.count({ where: whereClause }),
     prisma.transaction.findMany({
       where: whereClause,
-      orderBy: { transactionDate: "desc" },
+      orderBy: { createdAt: "desc" },
       skip,
       take: safeLimit,
       include: { category: true },
@@ -171,7 +171,7 @@ export function getTransactionsByCategory(userId: string | undefined, categoryId
       userId,
       categoryId,
     },
-    orderBy: { transactionDate: "desc" },
+    orderBy: { createdAt: "desc" },
     include: {
       category: true,
     },

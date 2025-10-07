@@ -24,6 +24,7 @@ model User {
   recommendations Recommendation[]
   reports      Report[]
   activityLogs ActivityLog[]
+  subscription UserSubscription?
   createdAt    DateTime              @default(now())
   lastLogin    DateTime?
   isNew        Boolean               @default(true)
@@ -172,4 +173,44 @@ model ActivityLog {
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  price       Decimal
+  currency    String   @default("IDR")
+  interval    String   // monthly, yearly
+  features    String[] // Array of feature names
+  maxTransactions Int? // null = unlimited
+  maxGoals    Int?     // null = unlimited
+  maxCategories Int?   // null = unlimited
+  hasAI       Boolean  @default(false)
+  hasOCR      Boolean  @default(false)
+  hasReports  Boolean  @default(false)
+  hasExport   Boolean  @default(false)
+  hasPrioritySupport Boolean @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  subscriptions UserSubscription[]
+}
+
+model UserSubscription {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  user            User             @relation(fields: [userId], references: [id])
+  planId          String
+  plan            SubscriptionPlan @relation(fields: [planId], references: [id])
+  status          String           // active, cancelled, expired, pending
+  startDate       DateTime
+  endDate         DateTime
+  autoRenew       Boolean          @default(true)
+  paymentMethod   String?          // credit_card, bank_transfer, etc
+  paymentId       String?          // External payment system ID
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  cancelledAt     DateTime?
+  nextBillingDate DateTime?
 }

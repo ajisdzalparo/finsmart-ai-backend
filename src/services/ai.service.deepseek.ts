@@ -80,8 +80,6 @@ async function callDeepSeek(prompt: string): Promise<string> {
 
 export class DeepseekAIService {
   static async previewFinancialInsights(userId: string) {
-    console.log("🤖 [DeepSeek] Starting previewFinancialInsights for user:", userId);
-
     // Build summary (same as generator) but DO NOT write to DB
     const [transactions, goals] = await Promise.all([
       prisma.transaction.findMany({
@@ -95,13 +93,6 @@ export class DeepseekAIService {
 
     const totalIncome = transactions.filter((t) => t.category?.type === "income").reduce((s, t) => s + Number(t.amount), 0);
     const totalExpense = transactions.filter((t) => t.category?.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
-
-    console.log("📊 [DeepSeek] Data summary:", {
-      transactionsCount: transactions.length,
-      goalsCount: goals.length,
-      totalIncome,
-      totalExpense,
-    });
 
     const summary = {
       totalIncome,
@@ -145,7 +136,6 @@ Balas HANYA JSON array valid, tanpa teks lain.`;
 
     // Jika tidak ada insights dari AI, buat fallback berdasarkan data
     if (insights.length === 0) {
-      console.log("🔄 [DeepSeek] No AI insights, generating fallback insights");
       const fallbackInsights = [];
 
       if (transactions.length === 0) {

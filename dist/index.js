@@ -23,6 +23,7 @@ const reports_1 = __importDefault(require("./routes/reports"));
 const activity_1 = __importDefault(require("./routes/activity"));
 const ai_1 = __importDefault(require("./routes/ai"));
 const ai_scheduler_1 = __importDefault(require("./routes/ai.scheduler"));
+const ocr_1 = __importDefault(require("./routes/ocr"));
 const socket_service_1 = require("./services/socket.service");
 const ai_scheduler_service_1 = require("./services/ai.scheduler.service");
 dotenv_1.default.config();
@@ -54,13 +55,10 @@ app.use("/reports", reports_1.default);
 app.use("/activity", activity_1.default);
 app.use("/ai", ai_1.default);
 app.use("/ai-scheduler", ai_scheduler_1.default);
-// Setup Socket.IO handlers
+app.use("/transactions", ocr_1.default);
 (0, socket_service_1.setupSocketHandlers)(io);
-// Initialize AI Scheduler
 ai_scheduler_service_1.AISchedulerService.initialize();
 const port = Number(process.env.PORT || 4000);
 server.listen(port, () => {
-    console.log(`🚀 Server listening on port ${port}`);
-    console.log(`🔌 Socket.IO server ready`);
-    console.log(`⏰ AI Scheduler initialized`);
+    console.log(`Server is running on port ${port}`);
 });

@@ -19,6 +19,7 @@ import reportsRouter from "./routes/reports";
 import activityRouter from "./routes/activity";
 import aiRouter from "./routes/ai";
 import aiSchedulerRouter from "./routes/ai.scheduler";
+import ocrRouter from "./routes/ocr";
 import { setupSocketHandlers } from "./services/socket.service";
 import { AISchedulerService } from "./services/ai.scheduler.service";
 
@@ -55,6 +56,7 @@ app.use("/reports", reportsRouter);
 app.use("/activity", activityRouter);
 app.use("/ai", aiRouter);
 app.use("/ai-scheduler", aiSchedulerRouter);
+app.use("/transactions", ocrRouter);
 
 setupSocketHandlers(io);
 

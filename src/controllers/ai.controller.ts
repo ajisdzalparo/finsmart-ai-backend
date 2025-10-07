@@ -37,12 +37,9 @@ export class AIController {
       const model = (req.query.model as string) || (req.headers["x-ai-model"] as string) || process.env.DEFAULT_AI_MODEL || "deepseek";
       const useGemini = String(model).toLowerCase().includes("gemini");
 
-      console.log("🎯 [AI Controller] Generating insights for user:", userId, "using model:", useGemini ? "gemini" : "deepseek");
-
       const insights = useGemini ? await GeminiAIService.generateFinancialInsights(userId) : await DeepseekAIService.generateFinancialInsights(userId);
       res.set("x-ai-model-used", useGemini ? "gemini" : "deepseek");
 
-      console.log("✅ [AI Controller] Successfully generated", insights.length, "insights");
       return successResponse(res, insights, "AI insights generated successfully");
     } catch (error) {
       console.error("❌ [AI Controller] Error generating AI insights:", error);
