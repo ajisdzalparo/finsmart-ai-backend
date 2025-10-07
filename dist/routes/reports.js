@@ -4,5 +4,7 @@ const express_1 = require("express");
 const auth_1 = require("../middleware/auth");
 const reports_controller_1 = require("../controllers/reports.controller");
 const router = (0, express_1.Router)();
+router.get("/", auth_1.requireAuth, async (req, res) => (0, reports_controller_1.getReports)(req, res));
+router.get("/:id", auth_1.requireAuth, async (req, res) => (0, reports_controller_1.getReport)(req, res));
 router.post("/", auth_1.requireAuth, async (req, res) => (0, reports_controller_1.postReport)(req, res));
 exports.default = router;

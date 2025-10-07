@@ -96,7 +96,7 @@ export async function createBatchItems(userId: string | undefined, batchId: stri
   );
 
   // Setelah transaksi dibuat, proses alokasi ke goals (jika ada)
-  const allocationOps: Parameters<typeof prisma.$transaction>[0] = [] as any;
+  const allocationOps: any[] = [];
 
   items.forEach((t, idx) => {
     const allocs = t.goalAllocations || [];

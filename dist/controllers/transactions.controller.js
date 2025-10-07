@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTransactions = getTransactions;
+exports.getTransactionsPaginated = getTransactionsPaginated;
 exports.postQuickTransaction = postQuickTransaction;
 exports.postBatchTransactions = postBatchTransactions;
 exports.getTransaction = getTransaction;
@@ -22,6 +23,19 @@ const baseSchema = zod_1.z.object({
 async function getTransactions(req, res) {
     const items = await (0, transactions_service_1.listTransactions)(req.userId);
     (0, response_1.successResponse)(res, items);
+}
+async function getTransactionsPaginated(req, res) {
+    const page = Number(req.query.page ?? 1);
+    const limit = Number(req.query.limit ?? 10);
+    const type = req.query.type; // 'income' | 'expense' | 'transfer' | 'all'
+    const q = req.query.q ?? undefined;
+    const result = await (0, transactions_service_1.listTransactionsPaginated)(req.userId, page, limit, { type, q });
+    (0, response_1.successResponse)(res, result.items, "Success", 200, {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+    });
 }
 async function postQuickTransaction(req, res) {
     const parsed = baseSchema.safeParse(req.body);

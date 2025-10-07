@@ -10,6 +10,8 @@ exports.verifyPassword = verifyPassword;
 exports.createJwtToken = createJwtToken;
 exports.verifyJwtToken = verifyJwtToken;
 exports.updateUserProfile = updateUserProfile;
+exports.updateUserName = updateUserName;
+exports.changeUserPassword = changeUserPassword;
 const database_1 = require("../utils/database");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -45,4 +47,18 @@ async function updateUserProfile(userId, profileData) {
         where: { id: userId },
         data: profileData,
     });
+}
+async function updateUserName(userId, name) {
+    return database_1.prisma.user.update({ where: { id: userId }, data: { name } });
+}
+async function changeUserPassword(userId, currentPassword, newPassword) {
+    const user = await database_1.prisma.user.findUnique({ where: { id: userId } });
+    if (!user)
+        throw new Error("User not found");
+    const ok = await verifyPassword(currentPassword, user.passwordHash);
+    if (!ok)
+        throw new Error("Invalid current password");
+    const passwordHash = await bcrypt_1.default.hash(newPassword, 10);
+    await database_1.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    return true;
 }

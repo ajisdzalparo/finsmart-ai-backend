@@ -8,4 +8,6 @@ router.post("/register", auth_controller_1.register);
 router.get("/me", auth_1.requireAuth, auth_controller_1.me);
 router.post("/login", auth_controller_1.login);
 router.post("/complete-profile", auth_1.requireAuth, auth_controller_1.completeProfile);
+router.post("/update-name", auth_1.requireAuth, auth_controller_1.updateName);
+router.post("/change-password", auth_1.requireAuth, auth_controller_1.changePassword);
 exports.default = router;

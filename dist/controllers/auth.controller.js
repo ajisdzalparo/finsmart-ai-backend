@@ -4,6 +4,8 @@ exports.register = register;
 exports.login = login;
 exports.me = me;
 exports.completeProfile = completeProfile;
+exports.updateName = updateName;
+exports.changePassword = changePassword;
 const zod_1 = require("zod");
 const auth_service_1 = require("../services/auth.service");
 const response_1 = require("../utils/response");
@@ -100,5 +102,33 @@ async function completeProfile(req, res) {
     catch (error) {
         console.error("Error completing profile:", error);
         return (0, response_1.errorResponse)(res, "Failed to complete profile", 500);
+    }
+}
+async function updateName(req, res) {
+    const schema = zod_1.z.object({ name: zod_1.z.string().min(1) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success)
+        return (0, response_1.errorResponse)(res, "Invalid name", 400, parsed.error.format());
+    try {
+        const user = await (0, auth_service_1.updateUserName)(req.userId, parsed.data.name);
+        return (0, response_1.successResponse)(res, { name: user.name, email: user.email }, "Name updated", 200);
+    }
+    catch (error) {
+        return (0, response_1.errorResponse)(res, "Failed to update name", 500, error);
+    }
+}
+async function changePassword(req, res) {
+    const schema = zod_1.z.object({ currentPassword: zod_1.z.string().min(6), newPassword: zod_1.z.string().min(6) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success)
+        return (0, response_1.errorResponse)(res, "Invalid password payload", 400, parsed.error.format());
+    try {
+        await (0, auth_service_1.changeUserPassword)(req.userId, parsed.data.currentPassword, parsed.data.newPassword);
+        return (0, response_1.successResponse)(res, { ok: true }, "Password updated", 200);
+    }
+    catch (error) {
+        const message = String(error?.message || "Failed to update password");
+        const code = message.includes("Invalid current password") ? 400 : 500;
+        return (0, response_1.errorResponse)(res, message, code);
     }
 }

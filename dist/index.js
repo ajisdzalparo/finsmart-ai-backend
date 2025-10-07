@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const http_1 = require("http");
+const socket_io_1 = require("socket.io");
 const auth_1 = __importDefault(require("./routes/auth"));
 const profiles_1 = __importDefault(require("./routes/profiles"));
 const trajectories_1 = __importDefault(require("./routes/trajectories"));
@@ -20,8 +22,20 @@ const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const reports_1 = __importDefault(require("./routes/reports"));
 const activity_1 = __importDefault(require("./routes/activity"));
 const ai_1 = __importDefault(require("./routes/ai"));
+const ai_scheduler_1 = __importDefault(require("./routes/ai.scheduler"));
+const socket_service_1 = require("./services/socket.service");
+const ai_scheduler_service_1 = require("./services/ai.scheduler.service");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+const server = (0, http_1.createServer)(app);
+// Socket.IO setup
+const io = new socket_io_1.Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        methods: ["GET", "POST"],
+        credentials: true,
+    },
+});
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
@@ -39,7 +53,14 @@ app.use("/dashboard", dashboard_1.default);
 app.use("/reports", reports_1.default);
 app.use("/activity", activity_1.default);
 app.use("/ai", ai_1.default);
+app.use("/ai-scheduler", ai_scheduler_1.default);
+// Setup Socket.IO handlers
+(0, socket_service_1.setupSocketHandlers)(io);
+// Initialize AI Scheduler
+ai_scheduler_service_1.AISchedulerService.initialize();
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => {
-    console.log(`API listening on port ${port}`);
+server.listen(port, () => {
+    console.log(`🚀 Server listening on port ${port}`);
+    console.log(`🔌 Socket.IO server ready`);
+    console.log(`⏰ AI Scheduler initialized`);
 });

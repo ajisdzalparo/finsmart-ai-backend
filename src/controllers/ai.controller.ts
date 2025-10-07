@@ -3,6 +3,7 @@ import { DeepseekAIService } from "../services/ai.service.deepseek";
 import { GeminiAIService } from "../services/ai.service.gemini";
 import { successResponse, errorResponse } from "../utils/response";
 import { AuthRequest } from "../middleware/auth";
+import { prisma } from "../utils/database";
 
 export class AIController {
   static async previewInsights(req: AuthRequest, res: Response) {
@@ -35,11 +36,16 @@ export class AIController {
 
       const model = (req.query.model as string) || (req.headers["x-ai-model"] as string) || process.env.DEFAULT_AI_MODEL || "deepseek";
       const useGemini = String(model).toLowerCase().includes("gemini");
+
+      console.log("🎯 [AI Controller] Generating insights for user:", userId, "using model:", useGemini ? "gemini" : "deepseek");
+
       const insights = useGemini ? await GeminiAIService.generateFinancialInsights(userId) : await DeepseekAIService.generateFinancialInsights(userId);
       res.set("x-ai-model-used", useGemini ? "gemini" : "deepseek");
+
+      console.log("✅ [AI Controller] Successfully generated", insights.length, "insights");
       return successResponse(res, insights, "AI insights generated successfully");
     } catch (error) {
-      console.error("Error generating AI insights:", error);
+      console.error("❌ [AI Controller] Error generating AI insights:", error);
       return errorResponse(res, "Failed to generate AI insights", 500);
     }
   }
@@ -69,9 +75,6 @@ export class AIController {
         return errorResponse(res, "User not authenticated", 401);
       }
 
-      const { PrismaClient } = require("@prisma/client");
-      const prisma = new PrismaClient();
-
       const insights = await prisma.insight.findMany({
         where: { userId },
         orderBy: { generatedAt: "desc" },
@@ -91,9 +94,6 @@ export class AIController {
       if (!userId) {
         return errorResponse(res, "User not authenticated", 401);
       }
-
-      const { PrismaClient } = require("@prisma/client");
-      const prisma = new PrismaClient();
 
       const recommendations = await prisma.recommendation.findMany({
         where: { userId },
@@ -116,9 +116,6 @@ export class AIController {
       if (!userId) {
         return errorResponse(res, "User not authenticated", 401);
       }
-
-      const { PrismaClient } = require("@prisma/client");
-      const prisma = new PrismaClient();
 
       const recommendation = await prisma.recommendation.update({
         where: {
@@ -144,9 +141,6 @@ export class AIController {
         return errorResponse(res, "User not authenticated", 401);
       }
 
-      const { PrismaClient } = require("@prisma/client");
-      const prisma = new PrismaClient();
-
       await prisma.insight.delete({
         where: {
           id: insightId,
@@ -167,9 +161,6 @@ export class AIController {
       if (!userId) {
         return errorResponse(res, "User not authenticated", 401);
       }
-
-      const { PrismaClient } = require("@prisma/client");
-      const prisma = new PrismaClient();
 
       // Get recent insights
       const insights = await prisma.insight.findMany({

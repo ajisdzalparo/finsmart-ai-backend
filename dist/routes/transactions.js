@@ -5,6 +5,7 @@ const auth_1 = require("../middleware/auth");
 const transactions_controller_1 = require("../controllers/transactions.controller");
 const router = (0, express_1.Router)();
 router.get("/", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransactions)(req, res));
+router.get("/list", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransactionsPaginated)(req, res));
 router.get("/validate", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.validateTransactionName)(req, res));
 router.get("/:id", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransaction)(req, res));
 router.get("/category/:categoryId", auth_1.requireAuth, async (req, res) => (0, transactions_controller_1.getTransactionsByCategoryController)(req, res));

@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 import authRouter from "./routes/auth";
 import profilesRouter from "./routes/profiles";
@@ -16,12 +18,25 @@ import dashboardRouter from "./routes/dashboard";
 import reportsRouter from "./routes/reports";
 import activityRouter from "./routes/activity";
 import aiRouter from "./routes/ai";
+import aiSchedulerRouter from "./routes/ai.scheduler";
+import { setupSocketHandlers } from "./services/socket.service";
+import { AISchedulerService } from "./services/ai.scheduler.service";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+const server = createServer(app);
 
+// Socket.IO setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+app.use(cors());
 app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
@@ -39,7 +54,13 @@ app.use("/dashboard", dashboardRouter);
 app.use("/reports", reportsRouter);
 app.use("/activity", activityRouter);
 app.use("/ai", aiRouter);
+app.use("/ai-scheduler", aiSchedulerRouter);
+
+setupSocketHandlers(io);
+
+AISchedulerService.initialize();
+
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => {
-  console.log(`API listening on port ${port}`);
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
